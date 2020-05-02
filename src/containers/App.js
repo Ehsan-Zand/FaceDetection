@@ -19,9 +19,23 @@ class App extends Component {
     super();
     this.state = {
       input: '',
-      imageURL: ''
+      imageURL: '',
+      box: {}
     }
     
+  }
+  
+  findFaceBox = (response) => {
+    const faceBox = response.outputs[0].data.regions[0].region_info.bounding_box;
+    const image = document.getElementById('inputimage');
+    const width = Number(image.width);
+    const height = Number(image.height);
+    this.setState({box:{
+      left: faceBox.left_col * width,
+      top: faceBox.top_row * height,
+      right: width - faceBox.right_col * width,
+      bottom: height - faceBox.bottom_row * height
+    }})
   }
   
   onInputChange = (event) => {
@@ -32,32 +46,26 @@ class App extends Component {
     this.setState({imageURL: this.state.input});
     app.models
     .predict(clarifai.FACE_DETECT_MODEL, this.state.input)
-    .then(
-      function(response) {
-        console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
-      },
-      function(err) {
-        console.log(err);
-      }
+    .then(response => this.findFaceBox(response))
+    .catch(err => console.log(err));
+  }
+  
+  render(){
+    return (
+      <div className="App">
+      <Particles className='particles' params={particlesParams} />
+      <Navigation />
+      <Logo />
+      <Rank />
+      <ImageLinkForm 
+      onInputChange={this.onInputChange} 
+      onSubmitButton={this.onSubmitButton}
+      />
+      <FaceRecognition imageURL={this.state.imageURL} box={this.state.box} />
+      </div>
       );
     }
-    
-    render(){
-      return (
-        <div className="App">
-        <Particles className='particles' params={particlesParams} />
-        <Navigation />
-        <Logo />
-        <Rank />
-        <ImageLinkForm 
-        onInputChange={this.onInputChange} 
-        onSubmitButton={this.onSubmitButton}
-        />
-        <FaceRecognition imageURL={this.state.imageURL} />
-        </div>
-        );
-      }
-    }
-    
-    export default App;
-    
+  }
+  
+  export default App;
+  
