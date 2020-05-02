@@ -20,52 +20,56 @@ class App extends Component {
     this.state = {
       input: '',
       imageURL: '',
-      box: {}
+      box: []
     }
-    
   }
   
   findFaceBox = (response) => {
-    const faceBox = response.outputs[0].data.regions[0].region_info.bounding_box;
     const image = document.getElementById('inputimage');
     const width = Number(image.width);
     const height = Number(image.height);
-    this.setState({box:{
-      left: faceBox.left_col * width,
-      top: faceBox.top_row * height,
-      right: width - faceBox.right_col * width,
-      bottom: height - faceBox.bottom_row * height
-    }})
-  }
-  
-  onInputChange = (event) => {
-    this.setState({input: event.target.value});
-  }
-  
-  onSubmitButton = () => {
-    this.setState({imageURL: this.state.input});
-    app.models
-    .predict(clarifai.FACE_DETECT_MODEL, this.state.input)
-    .then(response => this.findFaceBox(response))
-    .catch(err => console.log(err));
-  }
-  
-  render(){
-    return (
-      <div className="App">
-      <Particles className='particles' params={particlesParams} />
-      <Navigation />
-      <Logo />
-      <Rank />
-      <ImageLinkForm 
-      onInputChange={this.onInputChange} 
-      onSubmitButton={this.onSubmitButton}
-      />
-      <FaceRecognition imageURL={this.state.imageURL} box={this.state.box} />
-      </div>
-      );
+    const boxes = response.outputs[0].data.regions.map(element => {
+      return(
+        {left: element.region_info.bounding_box.left_col * width,
+          top: element.region_info.bounding_box.top_row * height,
+          right: width - element.region_info.bounding_box.right_col * width,
+          bottom: height - element.region_info.bounding_box.bottom_row * height
+        }
+        );
+      });
+      this.setState({box: boxes});
     }
-  }
-  
-  export default App;
-  
+    
+    onInputChange = (event) => {
+      this.setState({input: event.target.value});
+    }
+    
+    onSubmitButton = () => {
+      this.setState({imageURL: this.state.input});
+      app.models
+      .predict(clarifai.FACE_DETECT_MODEL, this.state.input)
+      .then(response => {
+        this.findFaceBox(response);
+      })
+      .catch(err => console.log(err));
+    }
+    
+    render(){
+      return (
+        <div className="App">
+        <Particles className='particles' params={particlesParams} />
+        <Navigation />
+        <Logo />
+        <Rank />
+        <ImageLinkForm 
+        onInputChange={this.onInputChange} 
+        onSubmitButton={this.onSubmitButton}
+        />
+        <FaceRecognition imageURL={this.state.imageURL} box={this.state.box} />
+        </div>
+        );
+      }
+    }
+    
+    export default App;
+    
